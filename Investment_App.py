@@ -184,10 +184,10 @@ def load_artifacts():
         artifacts = {}
         
         # Load models
-        with open('best_classification_model.pkl', 'rb') as f:
+        with open('classification_model.pkl', 'rb') as f:
             artifacts['clf_model'] = pickle.load(f)
         
-        with open('best_regression_model.pkl', 'rb') as f:
+        with open('regression_model.pkl', 'rb') as f:
             artifacts['reg_model'] = pickle.load(f)
         
         # Load features
@@ -846,4 +846,5 @@ def main():
         """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
+
     main()

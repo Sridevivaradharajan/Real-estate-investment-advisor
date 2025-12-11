@@ -1,9 +1,5 @@
 #  **Real Estate Investment Advisor**
 
-## **Project Title**
-
-**Real Estate Investment Advisor: Predicting Property Profitability & Future Value**
-
 ## **Objective**
 
 Build a machine-learning system that helps real estate investors evaluate:
@@ -108,9 +104,3 @@ Top contributing features include:
 * Amenities & Transport Accessibility
 
 Explainability helps justify predictions and build investor confidence.
-
-
-
-
-✅ A **1-page executive summary**
-✅ A **final PPT for presentation**

@@ -824,6 +824,7 @@ with tab4:
     **SHAP (SHapley Additive exPlanations)** values show which features most influence the model's predictions.
     Higher SHAP values indicate greater importance in determining investment quality and price predictions.
     """)
+    shap_available = shap_clf_data is not None and shap_reg_data is not None
     
     col1, col2 = st.columns(2)
     
@@ -1018,6 +1019,7 @@ st.markdown("""
     Actual property values may vary. Consult real estate professionals before making investment decisions.</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 

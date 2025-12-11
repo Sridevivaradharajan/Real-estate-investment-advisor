@@ -114,11 +114,23 @@ def load_models():
         except:
             reg_scaler = None
 
-        return clf_model, reg_model, clf_features, reg_features, metadata, clf_scaler, reg_scaler
+        # Load SHAP values
+        try:
+            shap_clf_data = load_file("shap_values_classification.pkl")
+        except:
+            shap_clf_data = None
+
+        try:
+            shap_reg_data = load_file("shap_values_regression.pkl")
+        except:
+            shap_reg_data = None
+
+        return clf_model, reg_model, clf_features, reg_features, metadata, clf_scaler, reg_scaler, shap_clf_data, shap_reg_data
 
     except Exception as e:
         st.error(f"Error loading models: {e}")
         st.stop()
+
 
 # Load everything here
 clf_model, reg_model, clf_features, reg_features, metadata, clf_scaler, reg_scaler = load_models()
@@ -1017,6 +1029,7 @@ st.markdown("""
     Actual property values may vary. Consult real estate professionals before making investment decisions.</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 

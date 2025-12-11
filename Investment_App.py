@@ -86,9 +86,9 @@ st.markdown("""
 def load_models():
     """Load all saved models and artifacts"""
     try:
-        with open('best_classification_model.pkl', 'rb') as f:
+        with open('classification_model.pkl', 'rb') as f:
             clf_model = pickle.load(f)
-        with open('best_regression_model.pkl', 'rb') as f:
+        with open('regression_model.pkl', 'rb') as f:
             reg_model = pickle.load(f)
         with open('classification_features.pkl', 'rb') as f:
             clf_features = pickle.load(f)
@@ -1010,3 +1010,4 @@ st.markdown("""
     Actual property values may vary. Consult real estate professionals before making investment decisions.</p>
 </div>
 """, unsafe_allow_html=True)
+

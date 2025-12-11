@@ -133,7 +133,7 @@ def load_models():
 
 
 # Load everything here
-clf_model, reg_model, clf_features, reg_features, metadata, clf_scaler, reg_scaler = load_models()
+clf_model, reg_model, clf_features, reg_features, metadata, clf_scaler, reg_scaler, shap_clf_data, shap_reg_data = load_models()
 
 # ============================================================================
 # FEATURE ENGINEERING PIPELINE (EXACT MATCH FROM TRAINING)
@@ -825,17 +825,6 @@ with tab4:
     Higher SHAP values indicate greater importance in determining investment quality and price predictions.
     """)
     
-    # Load SHAP values if available
-    try:
-        with open('shap_values_classification.pkl', 'rb') as f:
-            shap_clf_data = pickle.load(f)
-        with open('shap_values_regression.pkl', 'rb') as f:
-            shap_reg_data = pickle.load(f)
-        shap_available = True
-    except:
-        shap_available = False
-        st.warning("SHAP values not found. Showing feature list only.")
-    
     col1, col2 = st.columns(2)
     
     with col1:
@@ -1029,6 +1018,7 @@ st.markdown("""
     Actual property values may vary. Consult real estate professionals before making investment decisions.</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 

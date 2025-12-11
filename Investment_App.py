@@ -82,38 +82,44 @@ st.markdown("""
 # ============================================================================
 # LOAD MODELS AND ARTIFACTS
 # ============================================================================
+
+# Path to the Models folder
+MODELS_DIR = os.path.join(os.path.dirname(__file__), "Models")
+
+def load_file(filename):
+    """Helper to load any pickle file from /Models folder"""
+    filepath = os.path.join(MODELS_DIR, filename)
+    with open(filepath, "rb") as f:
+        return pickle.load(f)
+
 @st.cache_resource
 def load_models():
-    """Load all saved models and artifacts"""
+    """Load all saved models and artifacts from the Models folder"""
     try:
-        with open('classification_model.pkl', 'rb') as f:
-            clf_model = pickle.load(f)
-        with open('regression_model.pkl', 'rb') as f:
-            reg_model = pickle.load(f)
-        with open('classification_features.pkl', 'rb') as f:
-            clf_features = pickle.load(f)
-        with open('regression_features.pkl', 'rb') as f:
-            reg_features = pickle.load(f)
-        with open('model_metadata.pkl', 'rb') as f:
-            metadata = pickle.load(f)
-        
+        clf_model = load_file("classification_model.pkl")
+        reg_model = load_file("regression_model.pkl")
+        clf_features = load_file("classification_features.pkl")
+        reg_features = load_file("regression_features.pkl")
+        metadata = load_file("model_metadata.pkl")
+
+        # Optional scalers
         try:
-            with open('classification_scaler.pkl', 'rb') as f:
-                clf_scaler = pickle.load(f)
+            clf_scaler = load_file("classification_scaler.pkl")
         except:
             clf_scaler = None
-        
+
         try:
-            with open('regression_scaler.pkl', 'rb') as f:
-                reg_scaler = pickle.load(f)
+            reg_scaler = load_file("regression_scaler.pkl")
         except:
             reg_scaler = None
-        
+
         return clf_model, reg_model, clf_features, reg_features, metadata, clf_scaler, reg_scaler
+
     except Exception as e:
         st.error(f"Error loading models: {e}")
         st.stop()
 
+# Load everything here
 clf_model, reg_model, clf_features, reg_features, metadata, clf_scaler, reg_scaler = load_models()
 
 # ============================================================================
@@ -1010,5 +1016,6 @@ st.markdown("""
     Actual property values may vary. Consult real estate professionals before making investment decisions.</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 

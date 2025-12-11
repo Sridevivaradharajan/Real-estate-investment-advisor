@@ -870,7 +870,7 @@ with tab4:
             )
     
     with col2:
-        st.markdown("#### 📈 Regression Features")
+        st.markdown("#### Regression Features")
         st.markdown(f"""
         <div class='info-box'>
         <strong>Model:</strong> {metadata['regression']['model_name']}<br>
@@ -1019,6 +1019,7 @@ st.markdown("""
     Actual property values may vary. Consult real estate professionals before making investment decisions.</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 

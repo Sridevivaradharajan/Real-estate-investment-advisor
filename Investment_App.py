@@ -86,9 +86,9 @@ st.markdown("""
 def load_models():
     """Load all saved models and artifacts"""
     try:
-        with open('classification_model.pkl', 'rb') as f:
+        with open('best_classification_model.pkl', 'rb') as f:
             clf_model = pickle.load(f)
-        with open('regression_model.pkl', 'rb') as f:
+        with open('best_regression_model.pkl', 'rb') as f:
             reg_model = pickle.load(f)
         with open('classification_features.pkl', 'rb') as f:
             clf_features = pickle.load(f)
@@ -97,7 +97,6 @@ def load_models():
         with open('model_metadata.pkl', 'rb') as f:
             metadata = pickle.load(f)
         
-        # Try to load scalers
         try:
             with open('classification_scaler.pkl', 'rb') as f:
                 clf_scaler = pickle.load(f)
@@ -121,15 +120,18 @@ clf_model, reg_model, clf_features, reg_features, metadata, clf_scaler, reg_scal
 # FEATURE ENGINEERING PIPELINE (EXACT MATCH FROM TRAINING)
 # ============================================================================
 def create_features(df):
-    """Create features exactly as in training - NO PRICE LEAKAGE"""
+    """Create features exactly as in training"""
     df_fe = df.copy()
     
     # Convert numeric columns
-    numeric_cols = ['Age_of_Property', 'Size_in_SqFt', 'Nearby_Schools', 
-                    'Nearby_Hospitals', 'Floor_No', 'Total_Floors', 'BHK']
+    numeric_cols = ['Age_of_Property', 'Size_in_SqFt', 'Price_in_Lakhs', 
+                    'Nearby_Schools', 'Nearby_Hospitals', 'Floor_No', 'Total_Floors', 'BHK']
     for col in numeric_cols:
         if col in df_fe.columns:
             df_fe[col] = pd.to_numeric(df_fe[col], errors='coerce').fillna(0)
+    
+    # Calculate Price_per_SqFt
+    df_fe['Price_per_SqFt'] = df_fe['Price_in_Lakhs'] / (df_fe['Size_in_SqFt'] + 1)
     
     # Infrastructure Score
     transport_map = {'High': 2, 'Medium': 1, 'Low': 0}
@@ -140,6 +142,13 @@ def create_features(df):
         df_fe['Transport_Score'] * 0.3
     )
     df_fe['Total_Infrastructure'] = df_fe['Nearby_Schools'] + df_fe['Nearby_Hospitals']
+    
+    # Location Quality (use fixed values for single prediction)
+    city_avg_size = 1500
+    state_avg_size = 1400
+    df_fe['City_Size_Level'] = city_avg_size
+    df_fe['State_Size_Level'] = state_avg_size
+    df_fe['Location_Infrastructure_Quality'] = df_fe['Infrastructure_Score']
     
     # Property Value Indicators
     df_fe['Size_per_BHK'] = df_fe['Size_in_SqFt'] / (df_fe['BHK'] + 1)
@@ -162,7 +171,7 @@ def create_features(df):
     df_fe['Is_Top_Floor'] = (df_fe['Floor_No'] == df_fe['Total_Floors']).astype(int)
     df_fe['Is_Ground_Floor'] = (df_fe['Floor_No'] == 0).astype(int)
     df_fe['Is_Ready_to_Move'] = (df_fe['Availability_Status'] == 'Ready_to_Move').astype(int)
-    df_fe['Is_Large_Property'] = (df_fe['Size_in_SqFt'] > 1200).astype(int)  # Use fixed median
+    df_fe['Is_Large_Property'] = (df_fe['Size_in_SqFt'] > 1200).astype(int)
     df_fe['Is_High_BHK'] = (df_fe['BHK'] >= 3).astype(int)
     
     # Interaction Features
@@ -170,13 +179,10 @@ def create_features(df):
     df_fe['Age_x_Infrastructure'] = df_fe['Age_of_Property'] * df_fe['Infrastructure_Score']
     df_fe['BHK_x_Amenities'] = df_fe['BHK'] * df_fe['Amenities_Count']
     
-    # Advanced Features (using estimated averages)
-    df_fe['City_Size_Level'] = 1500  # Placeholder
-    df_fe['State_Size_Level'] = 1400  # Placeholder
-    df_fe['Location_Infrastructure_Quality'] = df_fe['Infrastructure_Score']
-    df_fe['City_BHK_Level'] = 2.5  # Placeholder
+    # Advanced Features
+    df_fe['City_BHK_Level'] = 2.5
     df_fe['Property_vs_City_BHK'] = df_fe['BHK'] / 2.5
-    df_fe['Property_vs_City_Size'] = df_fe['Size_in_SqFt'] / 1500
+    df_fe['Property_vs_City_Size'] = df_fe['Size_in_SqFt'] / city_avg_size
     df_fe['Locality_Quality'] = df_fe['Infrastructure_Score']
     df_fe['Property_vs_Locality_Quality'] = 1.0
     df_fe['Space_per_Person'] = df_fe['Size_in_SqFt'] / ((df_fe['BHK'] * 2) + 1)
@@ -201,6 +207,8 @@ def create_features(df):
 
 def encode_categorical(df):
     """Encode categorical features"""
+    from sklearn.preprocessing import LabelEncoder
+    
     df_encoded = df.copy()
     categorical_cols = df_encoded.select_dtypes(include=['object', 'category']).columns.tolist()
     
@@ -208,7 +216,6 @@ def encode_categorical(df):
     low_cardinality = [col for col in categorical_cols if df_encoded[col].nunique() <= 20]
     
     # Label Encoding for high cardinality
-    from sklearn.preprocessing import LabelEncoder
     for col in high_cardinality:
         le = LabelEncoder()
         df_encoded[f'{col}_Encoded'] = le.fit_transform(df_encoded[col].astype(str))
@@ -228,12 +235,12 @@ def preprocess_input(input_df, feature_list, scaler=None):
     df_encoded = encode_categorical(df_featured)
     
     # Step 3: Log transformation for skewed features
-    log_candidates = ['Size_in_SqFt', 'Age_of_Property', 'BHK_x_Size']
+    log_candidates = ['Size_in_SqFt', 'Age_of_Property', 'BHK_x_Size', 'Price_in_Lakhs', 'Price_per_SqFt']
     for col in log_candidates:
         if col in df_encoded.columns:
             df_encoded[f'{col}_Log'] = np.log1p(df_encoded[col])
     
-    # Step 4: Select required features (preserve order!)
+    # Step 4: Select required features
     missing_features = []
     for feat in feature_list:
         if feat not in df_encoded.columns:
@@ -256,7 +263,7 @@ st.markdown("<p style='text-align: center; color: #4A5759;'>AI-Powered Property 
 st.markdown("---")
 
 # ============================================================================
-# SIDEBAR - MODEL INFO
+# SIDEBAR
 # ============================================================================
 with st.sidebar:
     st.markdown("### 📊 Model Information")
@@ -275,15 +282,6 @@ with st.sidebar:
     R² Score: {metadata['regression']['test_r2']:.4f}
     </div>
     """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    st.markdown("### 📖 How to Use")
-    st.info("""
-    1. **Single Prediction**: Enter property details in the form
-    2. **Bulk Prediction**: Upload CSV file with property data
-    3. **View Results**: Get investment recommendations and price forecasts
-    4. **Explore Insights**: Check visualizations and feature importance
-    """)
 
 # ============================================================================
 # MAIN TABS
@@ -291,64 +289,108 @@ with st.sidebar:
 tab1, tab2, tab3, tab4 = st.tabs(["🏡 Single Prediction", "📊 Bulk Prediction", "🗺️ Market Insights", "🔍 Feature Importance"])
 
 # ============================================================================
-# TAB 1: SINGLE PREDICTION
+# SINGLE PREDICTION TAB
 # ============================================================================
 with tab1:
-    st.markdown("### Enter Property Details")
-    
-    col1, col2, col3 = st.columns(3)
-    
+    st.markdown("### 🏡 Enter Property Details")
+
+    col1, col2, col3, col4 = st.columns(4)
+
     with col1:
         st.markdown("#### 📍 Location")
-        city = st.text_input("City", value="Mumbai")
-        state = st.text_input("State", value="Maharashtra")
-        locality = st.text_input("Locality", value="Andheri")
+        state = st.selectbox("State", [
+            'Tamil Nadu', 'Maharashtra', 'Punjab', 'Rajasthan', 'West Bengal',
+            'Chhattisgarh', 'Delhi', 'Jharkhand', 'Telangana', 'Karnataka',
+            'Uttar Pradesh', 'Assam', 'Uttarakhand', 'Bihar', 'Gujarat', 'Haryana',
+            'Andhra Pradesh', 'Madhya Pradesh', 'Kerala', 'Odisha'
+        ])
         
+        city = st.selectbox("City", [
+            'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune',
+            'Ahmedabad', 'Kolkata', 'Surat', 'Jaipur', 'Lucknow', 'Nagpur',
+            'Indore', 'Bhopal', 'Vishakhapatnam', 'Vijayawada', 'Kochi',
+            'Coimbatore', 'Mysore', 'Gurgaon', 'Noida', 'Faridabad'
+        ])
+        
+        locality = st.text_input("Locality", value="Locality_1", help="Enter as Locality_1 to Locality_500")
+
+    with col2:
         st.markdown("#### 🏢 Property Type")
-        property_type = st.selectbox("Type", ["Apartment", "Villa", "Independent_House", "Studio"])
+        property_type = st.selectbox("Type", ["Apartment", "Villa", "Independent House"])
         bhk = st.number_input("BHK", min_value=1, max_value=10, value=2)
         size = st.number_input("Size (Sq Ft)", min_value=300, max_value=10000, value=1000)
-    
-    with col2:
-        st.markdown("#### 🏗️ Property Details")
-        age = st.number_input("Age of Property (Years)", min_value=0, max_value=50, value=5)
+        
+    with col3:
+        st.markdown("#### 🏗️ Building Details")
+        year_built = st.number_input("Year Built", min_value=1970, max_value=2025, value=2018)
+        age = 2025 - year_built
         floor_no = st.number_input("Floor Number", min_value=0, max_value=50, value=2)
         total_floors = st.number_input("Total Floors", min_value=1, max_value=50, value=10)
-        
-        st.markdown("#### 🪑 Furnishing")
-        furnished = st.selectbox("Furnished Status", ["Fully_Furnished", "Semi_Furnished", "Unfurnished"])
-        facing = st.selectbox("Facing", ["North", "South", "East", "West", "North_East", "North_West", "South_East", "South_West"])
-    
-    with col3:
-        st.markdown("#### 🚗 Amenities")
+
+    with col4:
+        st.markdown("#### 🪑 Status")
+        furnished = st.selectbox("Furnished Status", ["Furnished", "Semi-furnished", "Unfurnished"])
+        facing = st.selectbox("Facing", ["North", "South", "East", "West"])
+        availability = st.selectbox("Availability", ["Ready_to_Move", "Under_Construction"])
+
+    col5, col6, col7 = st.columns(3)
+
+    with col5:
+        st.markdown("#### 🚗 Facilities")
         parking = st.selectbox("Parking Space", ["Yes", "No"])
         security = st.selectbox("Security", ["Yes", "No"])
-        amenities = st.multiselect("Additional Amenities", 
-                                   ["Pool", "Gym", "Clubhouse", "Garden", "PlayArea"],
-                                   default=["Pool", "Gym"])
         
-        st.markdown("#### 🏥 Nearby Facilities")
+    with col6:
+        st.markdown("#### 🏥 Nearby")
         schools = st.number_input("Nearby Schools", min_value=0, max_value=20, value=3)
         hospitals = st.number_input("Nearby Hospitals", min_value=0, max_value=20, value=2)
         transport = st.selectbox("Public Transport", ["High", "Medium", "Low"])
-    
-    col4, col5 = st.columns(2)
-    with col4:
-        owner_type = st.selectbox("Owner Type", ["First_Owner", "Second_Owner", "Third_Owner"])
-    with col5:
-        availability = st.selectbox("Availability", ["Ready_to_Move", "Under_Construction"])
-    
+
+    with col7:
+        st.markdown("#### 🎯 Amenities")
+        has_pool = st.checkbox("Pool")
+        has_gym = st.checkbox("Gym")
+        has_clubhouse = st.checkbox("Clubhouse")
+        has_garden = st.checkbox("Garden")
+        has_playground = st.checkbox("Playground")
+        
+        amenities_list = []
+        if has_pool: amenities_list.append("Pool")
+        if has_gym: amenities_list.append("Gym")
+        if has_clubhouse: amenities_list.append("Clubhouse")
+        if has_garden: amenities_list.append("Garden")
+        if has_playground: amenities_list.append("Playground")
+        amenities = ','.join(amenities_list) if amenities_list else 'None'
+
     st.markdown("---")
-    
+    col8, col9 = st.columns(2)
+
+    with col8:
+        owner_type = st.selectbox("Owner Type", ["Owner", "Builder", "Broker"])
+
+    with col9:
+        current_price = st.number_input(
+            "Current Price (Lakhs ₹)",
+            min_value=10.0,
+            max_value=1000.0,
+            value=50.0,
+            step=5.0,
+            help="Enter the actual current market price of this property in Lakhs"
+        )
+
+    st.markdown("---")
+
     if st.button("🔮 Predict Investment Quality & Future Price", use_container_width=True):
-        # Prepare input
+        # Prepare input with ALL required fields
         input_data = pd.DataFrame({
-            'City': [city],
             'State': [state],
+            'City': [city],
             'Locality': [locality],
             'Property_Type': [property_type],
             'BHK': [bhk],
             'Size_in_SqFt': [size],
+            'Price_in_Lakhs': [current_price],
+            'Year_Built': [year_built],
             'Age_of_Property': [age],
             'Furnished_Status': [furnished],
             'Facing': [facing],
@@ -361,24 +403,24 @@ with tab1:
             'Nearby_Hospitals': [hospitals],
             'Floor_No': [floor_no],
             'Total_Floors': [total_floors],
-            'Amenities': [','.join(amenities) if amenities else 'None']
+            'Amenities': [amenities]
         })
         
         with st.spinner("🔄 Processing..."):
-            # Classification Prediction
-            X_clf = preprocess_input(input_data, clf_features, clf_scaler)
-            clf_pred = clf_model.predict(X_clf)[0]
-            clf_proba = clf_model.predict_proba(X_clf)[0]
+            try:
+                # Classification Prediction
+                X_clf = preprocess_input(input_data, clf_features, clf_scaler)
+                clf_pred = clf_model.predict(X_clf)[0]
+                clf_proba = clf_model.predict_proba(X_clf)[0]
+                
+                # Regression Prediction
+                X_reg = preprocess_input(input_data, reg_features, reg_scaler)
+                future_price = reg_model.predict(X_reg)[0]
+                appreciation = ((future_price / current_price - 1) * 100)
             
-            # Regression Prediction (needs current price estimate)
-            # Estimate current price based on size and location
-            estimated_price = (size / 1000) * 50  # Rough estimate
-            input_data_reg = input_data.copy()
-            input_data_reg['Price_in_Lakhs'] = estimated_price
-            
-            X_reg = preprocess_input(input_data_reg, reg_features, reg_scaler)
-            future_price = reg_model.predict(X_reg)[0]
-            appreciation = ((future_price / estimated_price - 1) * 100)
+            except Exception as e:
+                st.error(f"Prediction Error: {e}")
+                st.stop()
         
         # Display Results
         st.markdown("---")
@@ -400,8 +442,8 @@ with tab1:
         with col2:
             st.markdown(f"""
             <div class='metric-card'>
-                <h3 style='text-align: center; color: #4A5759;'>Estimated Current Price</h3>
-                <p style='text-align: center; font-size: 2rem; margin: 0; color: #4A5759;'>₹{estimated_price:.2f}L</p>
+                <h3 style='text-align: center; color: #4A5759;'>Current Price</h3>
+                <p style='text-align: center; font-size: 2rem; margin: 0; color: #4A5759;'>₹{current_price:.2f}L</p>
                 <p style='text-align: center; color: #4A5759;'>Today's Value</p>
             </div>
             """, unsafe_allow_html=True)
@@ -419,8 +461,9 @@ with tab1:
         st.markdown(f"""
         <div class='recommendation-box'>
             <h3 style='color: #4A5759;'>💡 Investment Recommendation</h3>
-            <p><strong>Property Type:</strong> {property_type} | <strong>Size:</strong> {size} sq ft | <strong>BHK:</strong> {bhk}</p>
+            <p><strong>Property:</strong> {bhk} BHK {property_type} | <strong>Size:</strong> {size} sq ft</p>
             <p><strong>Location:</strong> {locality}, {city}, {state}</p>
+            <p><strong>Age:</strong> {age} years | <strong>Floor:</strong> {floor_no}/{total_floors}</p>
             <p><strong>Analysis:</strong> {'This property shows strong investment potential with good appreciation prospects.' if clf_pred == 1 else 'This property may not meet investment quality standards. Consider other options.'}</p>
             <p><strong>Expected ROI:</strong> {appreciation:.1f}% over 5 years ({appreciation/5:.1f}% annually)</p>
         </div>
@@ -458,7 +501,7 @@ with tab1:
         with col2:
             # Price Growth Chart
             years = np.arange(0, 6)
-            prices = [estimated_price * ((1 + appreciation/100/5) ** year) for year in years]
+            prices = [current_price * ((1 + appreciation/100/5) ** year) for year in years]
             
             fig_growth = go.Figure()
             fig_growth.add_trace(go.Scatter(

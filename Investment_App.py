@@ -277,7 +277,7 @@ def preprocess_input(input_df, feature_list, scaler=None):
 # ============================================================================
 # HEADER
 # ============================================================================
-st.markdown("<h1 style='text-align: center; color: #4A5759;'>🏠 Real Estate Investment Analyzer</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #4A5759;'>Real Estate Investment Analyzer</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #4A5759;'>AI-Powered Property Investment Predictions</p>", unsafe_allow_html=True)
 st.markdown("---")
 
@@ -285,7 +285,7 @@ st.markdown("---")
 # SIDEBAR
 # ============================================================================
 with st.sidebar:
-    st.markdown("### 📊 Model Information")
+    st.markdown("### Model Information")
     st.markdown(f"""
     <div class='info-box'>
     <strong>Classification Model</strong><br>
@@ -305,18 +305,18 @@ with st.sidebar:
 # ============================================================================
 # MAIN TABS
 # ============================================================================
-tab1, tab2, tab3, tab4 = st.tabs(["🏡 Single Prediction", "📊 Bulk Prediction", "🗺️ Market Insights", "🔍 Feature Importance"])
+tab1, tab2, tab3, tab4 = st.tabs(["Single Prediction", "Bulk Prediction", "Market Insights", "Feature Importance"])
 
 # ============================================================================
 # SINGLE PREDICTION TAB
 # ============================================================================
 with tab1:
-    st.markdown("### 🏡 Enter Property Details")
+    st.markdown("### Enter Property Details")
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.markdown("#### 📍 Location")
+        st.markdown("#### Location")
         state = st.selectbox("State", [
             'Tamil Nadu', 'Maharashtra', 'Punjab', 'Rajasthan', 'West Bengal',
             'Chhattisgarh', 'Delhi', 'Jharkhand', 'Telangana', 'Karnataka',
@@ -334,20 +334,20 @@ with tab1:
         locality = st.text_input("Locality", value="Locality_1", help="Enter as Locality_1 to Locality_500")
 
     with col2:
-        st.markdown("#### 🏢 Property Type")
+        st.markdown("#### Property Type")
         property_type = st.selectbox("Type", ["Apartment", "Villa", "Independent House"])
         bhk = st.number_input("BHK", min_value=1, max_value=10, value=2)
         size = st.number_input("Size (Sq Ft)", min_value=300, max_value=10000, value=1000)
         
     with col3:
-        st.markdown("#### 🏗️ Building Details")
+        st.markdown("#### Building Details")
         year_built = st.number_input("Year Built", min_value=1970, max_value=2025, value=2018)
         age = 2025 - year_built
         floor_no = st.number_input("Floor Number", min_value=0, max_value=50, value=2)
         total_floors = st.number_input("Total Floors", min_value=1, max_value=50, value=10)
 
     with col4:
-        st.markdown("#### 🪑 Status")
+        st.markdown("#### Status")
         furnished = st.selectbox("Furnished Status", ["Furnished", "Semi-furnished", "Unfurnished"])
         facing = st.selectbox("Facing", ["North", "South", "East", "West"])
         availability = st.selectbox("Availability", ["Ready_to_Move", "Under_Construction"])
@@ -355,18 +355,18 @@ with tab1:
     col5, col6, col7 = st.columns(3)
 
     with col5:
-        st.markdown("#### 🚗 Facilities")
+        st.markdown("#### Facilities")
         parking = st.selectbox("Parking Space", ["Yes", "No"])
         security = st.selectbox("Security", ["Yes", "No"])
         
     with col6:
-        st.markdown("#### 🏥 Nearby")
+        st.markdown("#### Nearby")
         schools = st.number_input("Nearby Schools", min_value=0, max_value=20, value=3)
         hospitals = st.number_input("Nearby Hospitals", min_value=0, max_value=20, value=2)
         transport = st.selectbox("Public Transport", ["High", "Medium", "Low"])
 
     with col7:
-        st.markdown("#### 🎯 Amenities")
+        st.markdown("#### Amenities")
         has_pool = st.checkbox("Pool")
         has_gym = st.checkbox("Gym")
         has_clubhouse = st.checkbox("Clubhouse")
@@ -399,7 +399,7 @@ with tab1:
 
     st.markdown("---")
 
-    if st.button("🔮 Predict Investment Quality & Future Price", use_container_width=True):
+    if st.button("Predict Investment Quality & Future Price", use_container_width=True):
         # Prepare input with ALL required fields
         input_data = pd.DataFrame({
             'State': [state],
@@ -425,7 +425,7 @@ with tab1:
             'Amenities': [amenities]
         })
         
-        with st.spinner("🔄 Processing..."):
+        with st.spinner("Processing..."):
             try:
                 # Classification Prediction
                 X_clf = preprocess_input(input_data, clf_features, clf_scaler)
@@ -443,12 +443,12 @@ with tab1:
         
         # Display Results
         st.markdown("---")
-        st.markdown("## 📊 Prediction Results")
+        st.markdown("## Prediction Results")
         
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            quality = "✅ GOOD INVESTMENT" if clf_pred == 1 else "⚠️ NOT RECOMMENDED"
+            quality = "GOOD INVESTMENT" if clf_pred == 1 else "NOT RECOMMENDED"
             color = "#B0C4B1" if clf_pred == 1 else "#EDAFB8"
             st.markdown(f"""
             <div class='metric-card' style='background-color: {color};'>
@@ -479,7 +479,7 @@ with tab1:
         # Recommendation Box
         st.markdown(f"""
         <div class='recommendation-box'>
-            <h3 style='color: #4A5759;'>💡 Investment Recommendation</h3>
+            <h3 style='color: #4A5759;'>Investment Recommendation</h3>
             <p><strong>Property:</strong> {bhk} BHK {property_type} | <strong>Size:</strong> {size} sq ft</p>
             <p><strong>Location:</strong> {locality}, {city}, {state}</p>
             <p><strong>Age:</strong> {age} years | <strong>Floor:</strong> {floor_no}/{total_floors}</p>
@@ -489,7 +489,7 @@ with tab1:
         """, unsafe_allow_html=True)
         
         # Visualizations
-        st.markdown("### 📈 Investment Analysis")
+        st.markdown("### Investment Analysis")
         
         col1, col2 = st.columns(2)
         
@@ -546,7 +546,7 @@ with tab1:
 # TAB 2: BULK PREDICTION
 # ============================================================================
 with tab2:
-    st.markdown("### 📁 Upload CSV File for Bulk Predictions")
+    st.markdown("### Upload CSV File for Bulk Predictions")
     
     st.info("""
     **Required Columns:** City, State, Locality, Property_Type, BHK, Size_in_SqFt, Age_of_Property, 
@@ -558,12 +558,12 @@ with tab2:
     
     if uploaded_file is not None:
         bulk_data = pd.read_csv(uploaded_file)
-        st.success(f"✅ Loaded {len(bulk_data)} properties")
+        st.success(f"Loaded {len(bulk_data)} properties")
         
         st.markdown("#### Preview Data")
         st.dataframe(bulk_data.head(), use_container_width=True)
         
-        if st.button("🚀 Run Bulk Predictions", use_container_width=True):
+        if st.button("Run Bulk Predictions", use_container_width=True):
             with st.spinner("Processing all properties..."):
                 # Classification
                 X_clf_bulk = preprocess_input(bulk_data, clf_features, clf_scaler)
@@ -586,7 +586,7 @@ with tab2:
                 results['Appreciation_%'] = ((future_prices / bulk_data['Price_in_Lakhs'] - 1) * 100)
                 
                 st.markdown("---")
-                st.markdown("### 📊 Bulk Prediction Results")
+                st.markdown("### Bulk Prediction Results")
                 
                 # Summary metrics
                 col1, col2, col3, col4 = st.columns(4)
@@ -606,7 +606,7 @@ with tab2:
                 # Download button
                 csv = results.to_csv(index=False)
                 st.download_button(
-                    "📥 Download Results",
+                    "Download Results",
                     csv,
                     "predictions.csv",
                     "text/csv",
@@ -614,7 +614,7 @@ with tab2:
                 )
                 
                 # Visualizations
-                st.markdown("### 📈 Bulk Analysis Visualizations")
+                st.markdown("### Bulk Analysis Visualizations")
                 
                 col1, col2 = st.columns(2)
                 
@@ -647,7 +647,7 @@ with tab2:
 # TAB 3: MARKET INSIGHTS
 # ============================================================================
 with tab3:
-    st.markdown("### 🗺️ Market Analysis & Insights")
+    st.markdown("### Market Analysis & Insights")
     
     # Sample data for visualization (in production, load from database)
     sample_cities = ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Pune']
@@ -696,7 +696,7 @@ with tab3:
         st.plotly_chart(fig_growth, use_container_width=True)
     
     # Property Type Distribution
-    st.markdown("### 🏘️ Property Type Analysis")
+    st.markdown("### Property Type Analysis")
     property_types = ['Apartment', 'Villa', 'Independent House', 'Studio']
     property_counts = [450, 180, 120, 50]
     property_avg_prices = [65, 120, 95, 35]
@@ -729,7 +729,7 @@ with tab3:
     st.plotly_chart(fig_property, use_container_width=True)
     
     # BHK-wise Analysis
-    st.markdown("### 🛏️ BHK Configuration Analysis")
+    st.markdown("### BHK Configuration Analysis")
     bhk_config = ['1 BHK', '2 BHK', '3 BHK', '4+ BHK']
     bhk_demand = [25, 45, 22, 8]
     bhk_roi = [7.2, 8.5, 9.0, 8.2]
@@ -772,7 +772,7 @@ with tab3:
         st.plotly_chart(fig_bhk_roi, use_container_width=True)
     
     # Market Trends
-    st.markdown("### 📊 Market Trends & Predictions")
+    st.markdown("### Market Trends & Predictions")
     
     months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     price_trend = [65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76]
@@ -818,7 +818,7 @@ with tab3:
 # TAB 4: FEATURE IMPORTANCE
 # ============================================================================
 with tab4:
-    st.markdown("### 🔍 Model Feature Importance Analysis")
+    st.markdown("### Model Feature Importance Analysis")
     
     st.info("""
     **SHAP (SHapley Additive exPlanations)** values show which features most influence the model's predictions.
@@ -829,7 +829,7 @@ with tab4:
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("#### 📊 Classification Features")
+        st.markdown("#### Classification Features")
         st.markdown(f"""
         <div class='info-box'>
         <strong>Model:</strong> {metadata['classification']['model_name']}<br>
@@ -912,14 +912,14 @@ with tab4:
     
     # Feature Insights
     st.markdown("---")
-    st.markdown("### 💡 Key Feature Insights")
+    st.markdown("### Key Feature Insights")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
         st.markdown("""
         <div class='recommendation-box'>
-        <h4 style='color: #4A5759;'>🏗️ Property Characteristics</h4>
+        <h4 style='color: #4A5759;'>Property Characteristics</h4>
         <ul>
             <li><strong>Size:</strong> Larger properties generally appreciate faster</li>
             <li><strong>BHK:</strong> 3 BHK shows highest ROI</li>
@@ -932,7 +932,7 @@ with tab4:
     with col2:
         st.markdown("""
         <div class='recommendation-box'>
-        <h4 style='color: #4A5759;'>📍 Location Factors</h4>
+        <h4 style='color: #4A5759;'>Location Factors</h4>
         <ul>
             <li><strong>Infrastructure:</strong> Schools & hospitals crucial</li>
             <li><strong>Transport:</strong> High accessibility adds 15-20% value</li>
@@ -945,7 +945,7 @@ with tab4:
     with col3:
         st.markdown("""
         <div class='recommendation-box'>
-        <h4 style='color: #4A5759;'>🎯 Amenities Impact</h4>
+        <h4 style='color: #4A5759;'>Amenities Impact</h4>
         <ul>
             <li><strong>Security:</strong> Major factor for families</li>
             <li><strong>Parking:</strong> Essential in metro cities</li>
@@ -957,7 +957,7 @@ with tab4:
     
     # Model Explanation
     st.markdown("---")
-    st.markdown("### 🧠 How The Model Works")
+    st.markdown("### How The Model Works")
     
     st.markdown("""
     <div class='info-box'>
@@ -978,7 +978,7 @@ with tab4:
     with col1:
         st.markdown("""
         <div class='recommendation-box'>
-        <h4 style='color: #4A5759;'>✅ Classification Model</h4>
+        <h4 style='color: #4A5759;'>Classification Model</h4>
         <p><strong>Task:</strong> Predict if property is a "Good Investment"</p>
         <p><strong>Output:</strong> Binary classification with confidence score</p>
         <p><strong>Key Factors:</strong></p>
@@ -994,7 +994,7 @@ with tab4:
     with col2:
         st.markdown("""
         <div class='recommendation-box'>
-        <h4 style='color: #4A5759;'>📈 Regression Model</h4>
+        <h4 style='color: #4A5759;'>Regression Model</h4>
         <p><strong>Task:</strong> Forecast property price in 5 years</p>
         <p><strong>Output:</strong> Continuous price value in Lakhs (₹)</p>
         <p><strong>Key Factors:</strong></p>
@@ -1013,12 +1013,13 @@ with tab4:
 st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: #4A5759; padding: 2rem;'>
-    <h3>🏠 Real Estate Investment Analyzer</h3>
+    <h3>Real Estate Investment Analyzer</h3>
     <p>Powered by Machine Learning | Built with Streamlit</p>
     <p><strong>Disclaimer:</strong> Predictions are based on historical data and statistical models. 
     Actual property values may vary. Consult real estate professionals before making investment decisions.</p>
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
